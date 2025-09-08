@@ -7,89 +7,95 @@ namespace task09
         public static void Main()
         {
             Console.WriteLine("Enter path to the library");
+
             string? libraryPath = Console.ReadLine();
+
             Console.WriteLine();
 
             if (string.IsNullOrEmpty(libraryPath))
             {
                 Console.WriteLine("Empty path");
-                return;
             }
 
             if (!File.Exists(libraryPath))
             {
-                Console.WriteLine("Files not found");
+                Console.WriteLine($"Files not found");
                 return;
             }
 
             Assembly assembly = Assembly.LoadFrom(libraryPath);
-            var types = assembly.GetExportedTypes().OrderBy(t => t.Namespace + "." + t.Name);
+            IEnumerable<Type> types = assembly.GetExportedTypes().OrderBy(t => t.Namespace + "." + t.Name);
 
-            foreach (var type in types)
+            foreach (Type type in types)
             {
                 if (type.IsClass)
                 {
-                    PrintClassInfo(type);
+                    DisplayClassInfo(type);
                 }
             }
         }
 
-        public static void PrintClassInfo(Type type)
+        public static void DisplayClassInfo(Type type)
         {
             Console.WriteLine($"Class: {type.FullName}");
-            PrintAttributes(type.GetCustomAttributes());
-            PrintConstructors(type);
-            PrintMethods(type);
+
+            DisplayAttributes(type.GetCustomAttributes());
+            DisplayConstructors(type);
+            DisplayMethods(type);
+
             Console.WriteLine();
         }
 
-        public static void PrintAttributes(IEnumerable<Attribute> attributes)
+        public static void DisplayAttributes(IEnumerable<Attribute> attributes)
         {
             if (attributes.Any())
             {
                 Console.WriteLine("  Attributes:");
-                foreach (var attr in attributes)
-                {
-                    Console.WriteLine($"    - {attr.GetType().Name}");
-                }
+            }
+
+            foreach (Attribute attr in attributes)
+            {
+                Console.WriteLine($"    - {attr.GetType().Name}");
             }
         }
 
-        public static void PrintConstructors(Type type)
+        public static void DisplayConstructors(Type type)
         {
-            var constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            ConstructorInfo[] constructors = type.GetConstructors(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
 
             if (constructors.Length > 0)
             {
                 Console.WriteLine("  Constructors:");
-                foreach (var ctor in constructors)
-                {
-                    Console.Write($"    - {type.Name}(");
-                    PrintParameters(ctor.GetParameters());
-                    Console.WriteLine(")");
-                    PrintAttributes(ctor.GetCustomAttributes());
-                }
+            }
+
+            foreach (ConstructorInfo ctor in constructors)
+            {
+                Console.Write($"    - {type.Name}(");
+                DisplayParameters(ctor.GetParameters());
+                Console.WriteLine(")");
+                DisplayAttributes(ctor.GetCustomAttributes());
             }
         }
 
-        public static void PrintMethods(Type type)
+        public static void DisplayMethods(Type type)
         {
-            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName).ToArray();
+            MethodInfo[] methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly).Where(m => !m.IsSpecialName).ToArray();
 
             if (methods.Length > 0)
             {
                 Console.WriteLine("  Methods:");
-                foreach (var method in methods)
-                {
-                    Console.Write($"    - {method.ReturnType.Name} {method.Name}(");
-                    PrintParameters(method.GetParameters());
-                    Console.WriteLine(")");
-                    PrintAttributes(method.GetCustomAttributes());
-                }
+            }
+
+            foreach (MethodInfo method in methods)
+            {
+                Console.Write($"    - {method.ReturnType.Name} {method.Name}(");
+                DisplayParameters(method.GetParameters());
+                Console.WriteLine(")");
+                DisplayAttributes(method.GetCustomAttributes());
             }
         }
 
-        public static void PrintParameters(ParameterInfo[] parameters)
+        public static void DisplayParameters(ParameterInfo[] parameters)
         {
             for (int i = 0; i < parameters.Length; i++)
             {
@@ -98,8 +104,9 @@ namespace task09
                     Console.Write(", ");
                 }
 
-                var param = parameters[i];
+                ParameterInfo param = parameters[i];
                 Console.Write($"{param.ParameterType.Name} {param.Name}");
+                var paramAttrs = param.GetCustomAttributes();
             }
         }
     }

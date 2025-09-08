@@ -1,53 +1,65 @@
-﻿using System.Reflection;
-using CommandLib;
+﻿using System;
+using System.Reflection;
+using System.ComponentModel;
+using System.Linq;
 
-namespace CommandRunner
+namespace task07
 {
-    public class Program
+    public static class ReflectionHelper
     {
-        public static void Main()
+
+        public static void PrintTypeInfo(Type type)
         {
-            var testDir = Path.Combine(Path.GetTempPath(), "TestDir");
-            Directory.CreateDirectory(testDir);
+            DisplayClassAttributes(type);
 
-            File.WriteAllText(Path.Combine(testDir, "file1.txt"), "Text");
-            File.WriteAllText(Path.Combine(testDir, "file2.log"), "Log");
+            DisplayMethodInfo(type);
 
-            Assembly assembly = Assembly.LoadFrom("FileSystemCommands.dll");
+            DisplayPropertyInfo(type);
+        }
 
-            var commandTypes = assembly.GetTypes().Where(t => typeof(ICommand).IsAssignableFrom(t));
-            string mask = "*.txt";
-            object[] args = [testDir, mask];
-
-            foreach (var commandType in commandTypes)
+        private static void DisplayClassAttributes(Type type)
+        {
+            var displayNameAttribute = type.GetCustomAttribute<DisplayNameAttribute>();
+            if (displayNameAttribute != null)
             {
-                ICommand command;
-
-                if (commandType.Name == "DirectorySizeCommand")
-                {
-                    command = (ICommand)Activator.CreateInstance(commandType, args[0])!;
-                    command.Execute();
-                    Console.WriteLine(((DirectorySizeCommand)command).Size);
-                }
-                else if (commandType.Name == "FindFilesCommand")
-                {
-                    command = (ICommand)Activator.CreateInstance(commandType, args)!;
-                    command.Execute();
-
-                    string[] foundFiles = ((FindFilesCommand)command).FoundFiles;
-
-                    foreach (var foundFile in foundFiles)
-                    {
-                        Console.WriteLine(foundFile);
-                    }
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
+                Console.WriteLine($"Class: {displayNameAttribute.DisplayName}");
             }
 
-            Directory.Delete(testDir, true);
+            var versionAttribute = type.GetCustomAttribute<VersionAttribute>();
+            if (versionAttribute != null)
+            {
+                Console.WriteLine($"Version: {versionAttribute.Version}");
+            }
+        }
+
+        private static void DisplayMethodInfo(Type type)
+        {
+            Console.WriteLine("nMethods:");
+            var methods = type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+
+            var methodDisplayNames = methods
+                .Select(method => method.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName)
+                .Where(displayName => !string.IsNullOrEmpty(displayName));
+
+            foreach (var displayName in methodDisplayNames)
+            {
+                Console.WriteLine(displayName);
+            }
+        }
+
+        private static void DisplayPropertyInfo(Type type)
+        {
+            Console.WriteLine("nProperties:");
+            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+
+            var propertyDisplayNames = properties
+                .Select(property => property.GetCustomAttribute<DisplayNameAttribute>()?.DisplayName)
+                .Where(displayName => !string.IsNullOrEmpty(displayName));
+
+            foreach (var displayName in propertyDisplayNames)
+            {
+                Console.WriteLine(displayName);
+            }
         }
     }
 }
