@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PluginLoader\PluginLoader.csproj" />
+  </ItemGroup>
+
 </Project>
